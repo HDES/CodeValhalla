@@ -26,46 +26,57 @@ public class MyListener extends ListenerAdapter {
 	comandos.put("limpiarBot", "cleanBot");
 	comandos.put("limpiarTodo", "cleanAll");
 	comandos.put("prefijo", "prefix");
+	comandos.put("silencioso", "quiet");
 	*/
 	final String comando1 = prefijo.concat("ping");
-	final String comando2 = prefijo.concat("limpiarPrefijo");	//limpiarPrefijo [prefijo]   			//Borra los mensajes que empizan por prefijo
-	final String comando2 = prefijo.concat("limpiarBot");		//limpiarBot [nombreBot] [numeroMensajes]    	//Borra numeroMensajes del bot nombreBot
-	final String comando2 = prefijo.concat("limpiarTodo");		//limpiarTodo [numeroMensajes]   		//Borra numeroMensajes sin discriminar
-	final String comando4 = prefijo.concat("prefijo");		//prefijo [prefijo]				//Devuelve el prefijo actual. Si recibe un parámetro, cambia el prefijo al nuevo dado
+	final String comando2 = prefijo.concat("limpiarPrefijo");	//limpiarPrefijo [prefijo]	//Borra los mensajes que empizan por prefijo
+	final String comando3 = prefijo.concat("limpiarBot");		//limpiarBot [nombreBot] [numeroMensajes]	//Borra numeroMensajes del bot nombreBot
+	final String comando4 = prefijo.concat("limpiarTodo");		//limpiarTodo [numeroMensajes]	//Borra numeroMensajes sin discriminar
+	final String comando5 = prefijo.concat("prefijo");		//prefijo [prefijo]	//Devuelve el prefijo actual. Si recibe un parámetro, cambia el prefijo al nuevo dado
+	final String comando6 = prefijo.concat("silencioso");		//quiet [ON|OFF]	//Si se activa borra siempre el mensaje del comando utilizado y el que muestre el bot(si ese comando muestra algo)
 
 	@Override
-	public void onMessageReceived(MessageReceivedEvent event)
-	{
-		if (event.getAuthor().isBot()) return;		//No reacciona a mensajes de otros bots (incluido él mismo)
-		
-		Message mensaje = event.getMessage();		//Recoge el mensaje que activa el evento
-		String content = message.getContentRaw();	//Transforma el mensaje a cadena
+	public void onMessageReceived(MessageReceivedEvent evento)
+	{	
+		if ( !controlEntrada(evento) ) return; 
+			
+		Message mensajeObj = evento.getMessage();		//Recoge el mensaje que activa el evento
+		String mensajeCad = mensajeObj.getContentRaw();	//Transforma el mensaje a cadena
 		/*ALTERNATIVA PARA PROBAR*/ 
 		//String mensaje = event.getMessage().getContentRaw();		//Recoge el mensaje que activa el evento y lo transforma a cadena
 		
 		// getContentRaw() is an atomic getter
 		// getContentDisplay() is a lazy getter which modifies the content for e.g.
 		// console view (strip discord formatting)
-		if (content.equals(comando1)) {
-			MessageChannel channel = event.getChannel();
-			channel.sendMessage("Holi").queue(); // Important to call .queue() on the RestAction returned by sendMessage(...)
-
-		} else if (content.equals(comando2)) {
+		if ( mensajeCad.equals(comando1) ) 
+		{
+			MessageChannel canal = evento.getChannel();
+			canal.sendMessage("Holi").queue(); // Important to call .queue() on the RestAction returned by sendMessage(...)
+		} 
+		else if (mensajeCad.equals(comando2) ) 
+		{
 			limpiarPrefijo(event);
-			
-		} else if (content.equals(comando2)) {
+		} 
+		else if (mensajeCad.equals(comando3) ) 
+		{
 			limpiarBot(event);
-			
-		} else if (content.equals(comando3)) {
+		} 
+		else if (mensajeCad.equals(comando4) ) 
+		{
 			limpiarTodo(event);
-			
-		} else if(content.equals(comando4)) {
-			
+		}
+		else if (mensajeCad.equals(comando5) ) 
+		{
+			//cambiar o mostrar prefijo
+		}
+		else if (mensajeCad.equals(comando6) ) 
+		{
+			//activar modo silencioso
 		}
 		
 	}
 	
-	
+	//limpiarPrefijo [prefijo]	//Borra los mensajes que empizan por prefijo
 	private void limpiarPrefijo(MessageReceivedEvent evento) 
 	{
 		TextChannel canal = evento.getTextChannel();	//Recoge el canal de texto donde debe actuar
@@ -74,7 +85,8 @@ public class MyListener extends ListenerAdapter {
 		//Para ganar eficiencia, primero guardamos todos los mensajes en una Lista de Message 
 		//y luego llamamos a deleteMessages(listaMensajes) para borrarlos todos de una vez
 		List <Message> listaMensajes = new ArrayList();
-		for (Message mensaje : canal.getIterableHistory()) {
+		for (Message mensaje : canal.getIterableHistory()) 
+		{
 			if (mensaje.getContentRaw().substring(0, tamPrefijo).equals(prefijo))	//Si un mensaje empieza por prefijo, se borra
 			{
 		        	listaMensajes.add(mensaje);
@@ -83,7 +95,8 @@ public class MyListener extends ListenerAdapter {
 		}
 		channel.deleteMessages(listaMensajes).queue();		//Borra todos los mensajes especificados en listaMensajes
 	}
-	
+
+	//limpiarBot [nombreBot] [numeroMensajes]	//Borra numeroMensajes del bot nombreBot
 	private void limpiarBot(MessageReceivedEvent evento) 
 	{
 		TextChannel canal = evento.getTextChannel();	//Recoge el canal de texto donde debe actuar
@@ -92,7 +105,8 @@ public class MyListener extends ListenerAdapter {
 		//Para ganar eficiencia, primero guardamos todos los mensajes en una Lista de Message 
 		//y luego llamamos a deleteMessages(listaMensajes) para borrarlos todos de una vez
 		List <Message> listaMensajes = new ArrayList();
-		for (Message mensaje : canal.getIterableHistory()) {
+		for (Message mensaje : canal.getIterableHistory()) 
+		{
 			if (mensaje.getAuthor().getId().equals(botClientID))	//Si es un mensaje de este bot, se borra
 			{
 		        	listaMensajes.add(mensaje);
@@ -102,6 +116,7 @@ public class MyListener extends ListenerAdapter {
 		channel.deleteMessages(listaMensajes).queue();		//Borra todos los mensajes especificados en listaMensajes
 	}
 
+	//limpiarTodo [numeroMensajes]	//Borra numeroMensajes sin discriminar
 	private void limpiarTodo(MessageReceivedEvent evento) 
 	{
 		TextChannel canal = evento.getTextChannel();	//Recoge el canal de texto donde debe actuar
@@ -127,7 +142,8 @@ public class MyListener extends ListenerAdapter {
 		//Para ganar eficiencia, primero guardamos todos los mensajes en una Lista de Message 
 		//y luego llamamos a deleteMessages(listaMensajes) para borrarlos todos de una vez
 		List <Message> listaMensajes = new ArrayList();
-		for (Message mensaje : canal.getIterableHistory()) {
+		for (Message mensaje : canal.getIterableHistory()) 
+		{
 			if (cad1.equals(cad2))		//Si cad1 == cad2, se borra
 			{
 		        	listaMensajes.add(mensaje);
@@ -137,5 +153,39 @@ public class MyListener extends ListenerAdapter {
 		channel.deleteMessages(listaMensajes).queue();		//Borra todos los mensajes especificados en listaMensajes
 	}
 	
+	private bool controlEntrada(MessageReceivedEvent event)
+	{
+		bool valida = true;	//Bandera para saber si la entrada es válida o no
+		
+		/*COMPROBACIONES*/
+		if ( event.getAuthor().isBot() ) valida = false;	//No reacciona a mensajes de otros bots (incluido él mismo)
+		
+		String mensaje = event.getMessage().getContentRaw();	//Recoge el mensaje que activa el evento y lo transforma a cadena
+		
+		String[] mensajeDiv = mensaje.trim().split("\\s+");	//Se divide el mensaje por espacios en distintas subcadenas
+		int i = 0;
+		while ( bool finCadenas = true )
+		{
+			try { mensajeDiv[i]; ++i; } catch (/*EXCEPCION POR INVESTIGAR*/) { finCadenas = false; }
+		}
+		
+		/*COMPROBACIONES*/
+		if ( !cadena[0].equal(prefijo) ) valida = false;	//El mensaje no empieza por el prefijo actual
+		if ( comandos.get(cadena[1]) == null ) valida = false;	//El comando no existe
+		
+		return valida;
+	}
+
+	//Devuelve true si 0 <= numeroParamentros <= maximo, false en caso contrario
+	private bool numeroParametros(String mensaje, int maximo)
+	{
+		String[] mensajeDiv = mensaje.trim().split("\\s+");	//Se divide el mensaje por espacios en distintas subcadenas
+		int i = 0;
+		while ( bool finCadenas = true )
+		{
+			try { mensajeDiv[i]; ++i; } catch (/*EXCEPCION POR INVESTIGAR*/) { finCadenas = false; }
+		}
+		return (i >= 0 && i <= maximo);
+	}
 
 }
