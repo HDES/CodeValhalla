@@ -30,21 +30,29 @@ public class MyListener extends ListenerAdapter {
 	final String comando5 = prefijo.concat("prefijo");		//prefijo [prefijo]	//Devuelve el prefijo actual. Si recibe un parámetro, cambia el prefijo al nuevo dado
 	final String comando6 = prefijo.concat("silencioso");		//quiet [ON|OFF]	//Si se activa borra siempre el mensaje del comando utilizado y el que muestre el bot(si ese comando muestra algo)
 
+	MessageChannel canal;
+	
 	@Override
 	public void onMessageReceived(MessageReceivedEvent evento)
 	{	
 		//if ( !controlEntrada(evento) ) return; 
 			
-		String mensajeCad = evento.getMessage().getContentRaw();		//Recoge el mensaje que activa el evento y lo transforma a cadena, atomic getter¿?
+		String mensaje = evento.getMessage().getContentRaw();		//Recoge el mensaje que activa el evento y lo transforma a cadena, atomic getter¿?
+		canal = evento.getChannel();
+		int i;
+		for ( i = 0; i < mensaje.length() && mensaje.charAt(i) != ' '; i++); // comprueba que llegue hasta el final del mensaje o si detecta un espacio al final de este
+		String mensajeCad = (i == mensaje.length()) ? mensaje : mensaje.substring(0, i-1); // 
+		//comprueba lo que hay a la izquierda de ?, si es true devuelve lo que hay a la izquierda de : o si es false devuelve lo que hay a la derecha de : (operador ternario)	
 		
 		if ( mensajeCad.equals(comando1) ) 
 		{
-			MessageChannel canal = evento.getChannel();
 			canal.sendMessage("Holi").queue(); // Important to call .queue() on the RestAction returned by sendMessage(...)
 		} 
-		else if (mensajeCad.equals(comando2) ) 
+		else if (mensajeCad.equals(comando2) && numeroParametros(mensajeCad, 1)) 
 		{
-			limpiarPrefijo(evento);
+			canal.sendMessage("Holi").queue();
+			String[] param = recogerParametros(mensajeCad, comando2);
+			limpiarPrefijo(evento, param[0]);
 		} 
 		else if (mensajeCad.equals(comando3) ) 
 		{
@@ -66,7 +74,7 @@ public class MyListener extends ListenerAdapter {
 	}
 	
 	//limpiarPrefijo [prefijo]	//Borra los mensajes que empizan por prefijo
-	private void limpiarPrefijo(MessageReceivedEvent evento) 
+	private void limpiarPrefijo(MessageReceivedEvent evento, String param1) 
 	{
 		TextChannel canal = evento.getTextChannel();	//Recoge el canal de texto donde debe actuar
 		int i = 10;		//Contador para salir del bucle (número de mensajes a borrar)
@@ -76,7 +84,7 @@ public class MyListener extends ListenerAdapter {
 		List <Message> listaMensajes = new ArrayList();
 		for (Message mensaje : canal.getIterableHistory()) 
 		{
-			if (mensaje.getContentRaw().substring(0, tamPrefijo).equals(prefijo))	//Si un mensaje empieza por prefijo, se borra
+			if (mensaje.getContentRaw().substring(0, tamPrefijo).equals(param1))	//Si un mensaje empieza por prefijo, se borra
 			{
 		        	listaMensajes.add(mensaje);
 			} 
@@ -160,14 +168,16 @@ public class MyListener extends ListenerAdapter {
 	//Devuelve true si 0 <= numeroParamentros <= maximo, false en caso contrario
 	private boolean numeroParametros(String mensaje, int maximo)
 	{
+		canal.sendMessage("numParam").queue();
+	
 		boolean finCadenas = true;
 		String[] mensajeDiv = mensaje.trim().split("\\s+");	//Se divide el mensaje por espacios en distintas subcadenas
-		int i = 0;
+		int i = 1;
 		while ( finCadenas )
 		{
 			try { String basura = mensajeDiv[i]; ++i; } catch (ArrayIndexOutOfBoundsException e) { finCadenas = false; }
 		}
-		return (i >= 0 && i <= maximo);
+		return (i-1 >= 0 && i-1 <= maximo);
 	}
 	
 	private void inicializarComandosMap() {
@@ -177,6 +187,13 @@ public class MyListener extends ListenerAdapter {
 		comandos.put("limpiarTodo", "cleanAll");
 		comandos.put("prefijo", "prefix");
 		comandos.put("silencioso", "quiet");
+	}
+	
+	private String[] recogerParametros(String mensaje, String comando) {
+		// 	Separamos parámetros que vienen después del comando
+		//  Ejemplo: "!!limpiarBot Groovy 25" -> " Groovy 25"
+		return mensaje.substring(comando.length()).trim().split("\\s+");	
+
 	}
 
 }
