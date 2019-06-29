@@ -11,7 +11,7 @@ public class Bot
     {
     	try 
     	{  		
-    	JDA api = new JDABuilder("NTI1MjczMTg5Mjg3MTk4NzIx.XQenDg.S9i-cUb3t65TApIIfcF2occW_Ls").addEventListener(new MyListener()).build().awaitReady();
+    	JDA api = new JDABuilder(Key.token).addEventListener(new MyListener()).build().awaitReady();
     	//el método awaitReady hace "Blocking" garantizando que el JDA se cargará guay
 
     	} 
