@@ -137,12 +137,21 @@ public class MyListener extends ListenerAdapter {
 	private boolean controlEntrada(MessageReceivedEvent evento)
 	{
 		boolean valida = true;	//Bandera para saber si la entrada es válida o no
+<<<<<<< HEAD
 		
 		if ( evento.getAuthor().isBot() ) valida = false;		//No reacciona a mensajes de otros bots (incluido él mismo)
 		else
 		{
 			String[] mensajeDiv = evento.getMessage().getContentRaw().trim().split("\\s+");		//Se divide el mensaje por espacios en distintas subcadenas
 		
+=======
+		
+		if ( evento.getAuthor().isBot() ) valida = false;		//No reacciona a mensajes de otros bots (incluido él mismo)
+		else
+		{
+			String[] mensajeDiv = evento.getMessage().getContentRaw().trim().split("\\s+");		//Se divide el mensaje por espacios en distintas subcadenas
+		
+>>>>>>> 975a64ca18c6836dfd754ab4a3fcb2030bd62dd0
 			if ( !mensajeDiv[0].equals(prefijo) ) valida = false;				//El mensaje no empieza por el prefijo actual
 			else if ( comandos.get(mensajeDiv[1]) == null ) valida = false;		//El comando no existe
 		}
@@ -165,6 +174,7 @@ public class MyListener extends ListenerAdapter {
 		comandos.put("prefijo"			, "prefix"				);
 		comandos.put("silencioso"		, "quiet"				);
 	}
+<<<<<<< HEAD
 
 	//Post: inicializa el diccionario de comandos palabra-número
 	private void inicializarComandosNum() {
@@ -208,3 +218,48 @@ public class MyListener extends ListenerAdapter {
 	}
 
 }
+=======
+
+	//Post: inicializa el diccionario de comandos palabra-número
+	private void inicializarComandosNum() {
+		//Orden alfabético
+		comandosNum.put("ayuda"				, 0);
+		comandosNum.put("borrarAnclados"	, 1);
+		comandosNum.put("limpiarBot"		, 2);
+		comandosNum.put("limpiarPrefijo"	, 3);
+		comandosNum.put("limpiarTodo"		, 4);
+		comandosNum.put("limpiarUsuario"	, 5);
+		comandosNum.put("numeroMensajes"	, 6);
+		comandosNum.put("opciones"			, 7);
+		comandosNum.put("ping"				, 8);
+		comandosNum.put("prefijo"			, 9);
+		comandosNum.put("silencioso"		, 10);
+	}
+
+	//Post: inicializa el diccionario de comandos palabra-número
+	private void inicializarComandosPar() {
+		//Orden alfabético
+		comandosPar.put("ayuda"				, 0);
+		comandosPar.put("borrarAnclados"	, 1);
+		comandosPar.put("limpiarBot"		, 2);
+		comandosPar.put("limpiarPrefijo"	, 2);
+		comandosPar.put("limpiarTodo"		, 1);
+		comandosPar.put("limpiarUsuario"	, 2);
+		comandosPar.put("numeroMensajes"	, 1);
+		comandosPar.put("opciones"			, 0);
+		comandosPar.put("ping"				, 0);
+		comandosPar.put("prefijo"			, 1);
+		comandosPar.put("silencioso"		, 1);
+	}
+
+	//Post: inicializa la clase Estado con las opciones predeterminadas del bot
+	private void inicializarEstado() {
+		//Orden alfabético
+		estado.borrarAnclados = false;		//True = ON | False = OFF
+		estado.idioma = false;				//True = ENG | False = ESP
+		estado.numMensajes = 25;			//Por defecto = 25
+		estado.silencioso = false;			//True = ON | False = OFF
+	}
+
+}
+>>>>>>> 975a64ca18c6836dfd754ab4a3fcb2030bd62dd0
