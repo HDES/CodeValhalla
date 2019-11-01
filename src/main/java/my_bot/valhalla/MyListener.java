@@ -1,199 +1,228 @@
 package my_bot.valhalla;
 
-import java.util.ArrayList;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.MessageChannel;
-import net.dv8tion.jda.core.entities.TextChannel;
+import my_bot.valhalla.Comandoss;
+import net.dv8tion.jda.core.events.ReadyEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 public class MyListener extends ListenerAdapter {
 
-	final String botClientID = "525273189287198721";	//ID del Cliente del bot en Discord
+	/*VERY IMPORTANTE*/
+	//HAY QUE VER COMO LANZAR EXCEPCIONES
+	//HAY QUE REVISAR SI SE PUEDE DIVIDIR CÓDIGO EN VARIOS ARCHIVOS
+	//NUEVO COMANDO REPETIR COMANDOS DE OTROS BOTS (O MENSAJES EN GENERAL) CADA X TIEMPO EN Y CANAL (CONFIGURABLE)
 	
-	/*final*/ String prefijo = "!!"; // Prefijo usado antes de los comandos
-	/**PREFIJO**/
-	//prefijo ya no es final para poder modificarlo
-	final int tamPrefijo = prefijo.length(); // Longitud de la cadena del prefijo
+	//UTILIZAR COMANDOS CON OPCIONES POR EJEMPLO !!limpiarTodo -quiet SERIA SILENCIOSO AUNQUE estado.silencioso = false
 	
-	/**COMANDOS**/ 	
-	Map<String, String> comandos = new HashMap<>();
-	
-	final String comando1 = prefijo.concat("ping");
-	final String comando2 = prefijo.concat("limpiarPrefijo");	//limpiarPrefijo [prefijo]	//Borra los mensajes que empizan por prefijo
-	final String comando3 = prefijo.concat("limpiarBot");		//limpiarBot [nombreBot] [numeroMensajes]	//Borra numeroMensajes del bot nombreBot
-	final String comando4 = prefijo.concat("limpiarTodo");		//limpiarTodo [numeroMensajes]	//Borra numeroMensajes sin discriminar
-	final String comando5 = prefijo.concat("prefijo");		//prefijo [prefijo]	//Devuelve el prefijo actual. Si recibe un parámetro, cambia el prefijo al nuevo dado
-	final String comando6 = prefijo.concat("silencioso");		//quiet [ON|OFF]	//Si se activa borra siempre el mensaje del comando utilizado y el que muestre el bot(si ese comando muestra algo)
+	public static class Estado {
+		Estado() {
+			borrarAnclados = false;		//True = ON | False = OFF
+			numMensajes = 25;			//Por defecto = 25
+			silencioso = false;			//True = ON | False = OFF
+		}
+		//Orden alfabético
+		public Boolean borrarAnclados;
+		public Integer numMensajes;
+		public Boolean silencioso;
+	};
 
-	MessageChannel canal;
-	
-	@Override
-	public void onMessageReceived(MessageReceivedEvent evento)
+	public static Estado estado = new Estado();	//Se crea el estado actual del bot por defecto
+
+	public static String prefijo = "!!";	//Prefijo usado antes de los comandos
+	public final static Integer tamPrefijo = MyListener.prefijo.length();			//Longitud de la cadena del prefijo
+
+	public final static String contenidoAyuda = inicializarcontenidoAyuda();		//Contiene el mensaje que envia el comando Ayuda
+
+	/*COMANDOS*/ 
+	public static Map<String, String> comandos = new HashMap<String, String>();			//Para poder leer los comandos en español o inglés indistintamente
+	public static Map<String, Integer> comandosNum = new HashMap<String, Integer>();		//Se asigna un número arbitrario a los comandos para poder ejecutarlos usando una interfaz
+	public static Map<String, Integer> comandosPar = new HashMap<String, Integer>();		//Número máximo de parámetros que puede recibir un comando
+	/*COMANDOS*/
+
+	//Post: llama a las funciones para incializar los diccionarios
+	@Override public void onReady(ReadyEvent event)	//Cuando el bot esté listo para funcionar lanza ReadyEvent, así que lo usamos para inicializar el map
+	{
+		inicializarComandos();
+		inicializarComandosNum();
+		inicializarComandosPar();
+	}
+/*
+	//Post: ejecuta los comandos recibidos
+	@Override public void onMessageReceived(MessageReceivedEvent evento)
 	{	
-		//if ( !controlEntrada(evento) ) return; 
-			
-		String mensaje = evento.getMessage().getContentRaw();		//Recoge el mensaje que activa el evento y lo transforma a cadena, atomic getter¿?
-		canal = evento.getChannel();
-		int i;
-		for ( i = 0; i < mensaje.length() && mensaje.charAt(i) != ' '; i++); // comprueba que llegue hasta el final del mensaje o si detecta un espacio al final de este
-		String mensajeCad = (i == mensaje.length()) ? mensaje : mensaje.substring(0, i-1); // 
-		//comprueba lo que hay a la izquierda de ?, si es true devuelve lo que hay a la izquierda de : o si es false devuelve lo que hay a la derecha de : (operador ternario)	
+		if ( !controlEntrada(evento) ) return;
 		
-		if ( mensajeCad.equals(comando1) ) 
-		{
-			canal.sendMessage("Holi").queue(); // Important to call .queue() on the RestAction returned by sendMessage(...)
-		} 
-		else if (mensajeCad.equals(comando2) && numeroParametros(mensajeCad, 1)) 
-		{
-			canal.sendMessage("Holi").queue();
-			String[] param = recogerParametros(mensajeCad, comando2);
-			limpiarPrefijo(evento, param[0]);
-		} 
-		else if (mensajeCad.equals(comando3) ) 
-		{
-			limpiarBot(evento);
-		} 
-		else if (mensajeCad.equals(comando4) ) 
-		{
-			limpiarTodo(evento);
-		}
-		else if (mensajeCad.equals(comando5) ) 
-		{
-			//cambiar o mostrar prefijo
-		}
-		else if (mensajeCad.equals(comando6) ) 
-		{
-			//activar modo silencioso
-		}
+		String[] mensajeDiv = evento.getMessage().getContentRaw().trim().split("\\s+");		//Se divide el mensaje por espacios en distintas subcadenas
 		
+		Comandoss.opciones[comandosNum.getOrDefault(mensajeDiv[0].substring(tamPrefijo), Comandoss.opciones.length - 1)].IFuncion(evento);	//Para pasar el comando sin prefijo
 	}
-	
-	//limpiarPrefijo [prefijo]	//Borra los mensajes que empizan por prefijo
-	private void limpiarPrefijo(MessageReceivedEvent evento, String param1) 
-	{
-		TextChannel canal = evento.getTextChannel();	//Recoge el canal de texto donde debe actuar
-		int i = 10;		//Contador para salir del bucle (número de mensajes a borrar)
+*/
+	//Post: ejecuta los comandos recibidos
+	@Override public void onMessageReceived(MessageReceivedEvent evento)
+	{	
+		if ( !controlEntrada(evento) ) return;
 		
-		//Para ganar eficiencia, primero guardamos todos los mensajes en una Lista de Message 
-		//y luego llamamos a deleteMessages(listaMensajes) para borrarlos todos de una vez
-		List <Message> listaMensajes = new ArrayList();
-		for (Message mensaje : canal.getIterableHistory()) 
-		{
-			if (mensaje.getContentRaw().substring(0, tamPrefijo).equals(param1))	//Si un mensaje empieza por prefijo, se borra
-			{
-		        	listaMensajes.add(mensaje);
-			} 
-			if (i-- < 0) break;	//Aberración contra natura
+		String[] mensajeDiv = evento.getMessage().getContentRaw().trim().split("\\s+");		//Se divide el mensaje por espacios en distintas subcadenas
+		
+		
+		try {
+		Class<?> c= Class.forName(mensajeDiv[0].substring(tamPrefijo));
+		//c.newInstance();	//assuming you aren't worried about constructor.
+		// get the constructor with one parameter
+        Constructor<?> constructor = c.getConstructor(new Class[] {String.class});
+
+        // create an instance
+        Object invoker = constructor.newInstance(new Object[]{comandosNum.get(mensajeDiv[0].substring(tamPrefijo)), 0, estado.silencioso, comandos.get(mensajeDiv[0].substring(tamPrefijo)), comandosPar.get(mensajeDiv[0].substring(tamPrefijo))});
+		} catch (ClassNotFoundException e) { 
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		canal.deleteMessages(listaMensajes).queue();		//Borra todos los mensajes especificados en listaMensajes
+		
 	}
 
-	//limpiarBot [nombreBot] [numeroMensajes]	//Borra numeroMensajes del bot nombreBot
-	private void limpiarBot(MessageReceivedEvent evento) 
-	{
-		TextChannel canal = evento.getTextChannel();	
-		int i = 10;		
-		List <Message> listaMensajes = new ArrayList();
-		for (Message mensaje : canal.getIterableHistory()) 
-		{
-			if (mensaje.getAuthor().getId().equals(botClientID))	//Si es un mensaje de este bot, se borra
-			{
-		        	listaMensajes.add(mensaje);
-			} 
-			if (i-- < 0) break;	//Aberración contra natura
-		}
-		canal.deleteMessages(listaMensajes).queue();		
-	}
-
-	//limpiarTodo [numeroMensajes]	//Borra numeroMensajes sin discriminar
-	private void limpiarTodo(MessageReceivedEvent evento) 
-	{
-		TextChannel canal = evento.getTextChannel();	
-		int i = 10;		
-		List<Message> listaMensajes = new ArrayList();	
-		for( Message mensaje : canal.getIterableHistory())	//Borra i mensajes incondicionalmente
-		{
-			listaMensajes.add(mensaje);
-			if (i-- < 0) break;	//Aberración contra natura
-		}		
-		canal.deleteMessages(listaMensajes).queue();	
-	}
-
-	//Post: borra los mensajes cuyos cad1 sean iguales a cad2
-	private void limpiarGenericaCondicional(MessageReceivedEvent evento, String cad1, String cad2) 
-	{
-		TextChannel canal = evento.getTextChannel();	
-		int i = 10;		
-		List <Message> listaMensajes = new ArrayList();
-		for (Message mensaje : canal.getIterableHistory()) 
-		{
-			if (cad1.equals(cad2))		//Si cad1 == cad2, se borra
-			{
-		        	listaMensajes.add(mensaje);
-			} 
-			if (i-- < 0) break;	//Aberración contra natura
-		}
-		canal.deleteMessages(listaMensajes).queue();		
-	}
-	
-	private boolean controlEntrada(MessageReceivedEvent event)
+	//Post: Devuelve true si el comando no es de un bot, empieza por el prefijo actual y existe, false en caso contrario
+	private boolean controlEntrada(MessageReceivedEvent evento)
 	{
 		boolean valida = true;	//Bandera para saber si la entrada es válida o no
-		boolean finCadenas = true;
 		
-		/*COMPROBACIONES*/
-		if ( event.getAuthor().isBot() ) valida = false;	//No reacciona a mensajes de otros bots (incluido él mismo)
-		
-		String mensaje = event.getMessage().getContentRaw();	//Recoge el mensaje que activa el evento y lo transforma a cadena
-		
-		String[] mensajeDiv = mensaje.trim().split("\\s+");	//Se divide el mensaje por espacios en distintas subcadenas
-		int i = 0;
-		while (finCadenas)
+		if ( evento.getAuthor().isBot() ) valida = false;		//No reacciona a mensajes de otros bots (incluido él mismo)
+		else
 		{
-			try { String basura = mensajeDiv[i]; ++i; } catch (ArrayIndexOutOfBoundsException e) { finCadenas = false; }
+			String[] mensajeDiv = evento.getMessage().getContentRaw().trim().split("\\s+");		//Se divide el mensaje por espacios en distintas subcadenas
+
+			if ( !mensajeDiv[0].substring(0, tamPrefijo).equals(prefijo) ) valida = false;		//El mensaje no empieza por el prefijo actual
+			else if ( toBoolean(comandosNum.get(mensajeDiv[0].substring(0, tamPrefijo))) ) valida = false;		//El comando no existe
 		}
-		
-		/*COMPROBACIONES*/
-		if ( !mensajeDiv[0].equals(prefijo) ) valida = false;	//El mensaje no empieza por el prefijo actual
-		if ( comandos.get(mensajeDiv[1]) == null ) valida = false;	//El comando no existe
-		
+
 		return valida;
 	}
 
-	//Devuelve true si 0 <= numeroParamentros <= maximo, false en caso contrario
-	private boolean numeroParametros(String mensaje, int maximo)
-	{
-		canal.sendMessage("numParam").queue();
-	
-		boolean finCadenas = true;
-		String[] mensajeDiv = mensaje.trim().split("\\s+");	//Se divide el mensaje por espacios en distintas subcadenas
-		int i = 1;
-		while ( finCadenas )
-		{
-			try { String basura = mensajeDiv[i]; ++i; } catch (ArrayIndexOutOfBoundsException e) { finCadenas = false; }
-		}
-		return (i-1 >= 0 && i-1 <= maximo);
-	}
-	
-	private void inicializarComandosMap() {
-		comandos.put("ping", "ping"); // Añade un elemento al Map
-		comandos.put("limpiarPrefijo", "cleanPrefix");
-		comandos.put("limpiarBot", "cleanBot");
-		comandos.put("limpiarTodo", "cleanAll");
-		comandos.put("prefijo", "prefix");
-		comandos.put("silencioso", "quiet");
-	}
-	
-	private String[] recogerParametros(String mensaje, String comando) {
-		// 	Separamos parámetros que vienen después del comando
-		//  Ejemplo: "!!limpiarBot Groovy 25" -> " Groovy 25"
-		return mensaje.substring(comando.length()).trim().split("\\s+");	
-
+	//Post: inicializa la cadena que contiene el texto del comando "ayuda"
+	private static String inicializarcontenidoAyuda() {
+		String contenidoAyudaAux = "```"
+		+ "Comando								|		Descripción\n"
+		+ "-------------------------------------|--------------------------------------\n"
+		+ "ayuda								|		Devuelve la lista de los comandos disponibles\n"	
+		+ "borrarAnclados [ON|OFF]				|		Si se activa, los comandos limpiar... no borrarán mensajes anclados.\n"
+		+ "limpiarBot [nombre] [numero]			|		Borra numero mensajes del bot nombre\n"
+		+ "limpiarPrefijo [prefijo] [numero]	|		Borra numero mensajes que empizan por prefijo\n"
+		+ "limpiarTodo [numero]					|		Borra numero mensajes sin discriminar\n"
+		+ "limpiarUsuario [nombre] [numero]		|		Borra numero mensajes del Usuario dado\n"
+		+ "numeroMensajes [numero]				|		Muestra el número de mensajes borrados por defecto. Si se pasa un número, ese será la nueva cantidad por defecto\n"
+		+ "opciones								|		Muestra el estado actual de los comandos con variables\n"
+		+ "ping									|		Devuelve 'pong'\n"
+		+ "prefijo [prefijo]					|		Devuelve el prefijo actual. Si recibe un parámetro, cambia el prefijo al nuevo dado\n"
+		+ "silencioso [ON|OFF]					|		Si se activa borra siempre el mensaje del comando utilizado y el que muestre el bot(si ese comando muestra algo)\n"	;
+		
+		contenidoAyudaAux += "\nPREFIJO ACTUAL: " + prefijo;
+		
+		contenidoAyudaAux += "```";
+		return contenidoAyudaAux;
 	}
 
+	//Post: inicializa el diccionario de comandos español-inglés
+	private void inicializarComandos() {
+		//Orden alfabético
+		comandos.put("apagar"			, "shutdown"			);
+		comandos.put("ayuda"			, "help"				);
+		comandos.put("borrarAnclados"	, "lockPinned"			);
+		comandos.put("limpiarBot"		, "cleanBot"			);
+		comandos.put("limpiarPrefijo"	, "cleanPrefix"			);
+		comandos.put("limpiarTodo"		, "cleanAll"			);
+		comandos.put("limpiarUsuario"	, "cleanUser"			);
+		comandos.put("numeroMensajes"	, "messageNumber"		);
+		comandos.put("opciones"			, "options"				);
+		comandos.put("ping"				, "ping"				);
+		comandos.put("prefijo"			, "prefix"				);
+		comandos.put("silencioso"		, "quiet"				);
+	}
+
+	//Post: inicializa el diccionario de comandos palabra-número
+	private void inicializarComandosNum() {
+		//Orden alfabético
+		comandosNum.put("apagar"			, 0);
+		comandosNum.put("ayuda"				, 1);
+		comandosNum.put("borrarAnclados"	, 2);
+		comandosNum.put("limpiarBot"		, 3);
+		comandosNum.put("limpiarPrefijo"	, 4);
+		comandosNum.put("limpiarTodo"		, 5);
+		comandosNum.put("limpiarUsuario"	, 6);
+		comandosNum.put("numeroMensajes"	, 7);
+		comandosNum.put("opciones"			, 8);
+		comandosNum.put("ping"				, 9);
+		comandosNum.put("prefijo"			, 10);
+		comandosNum.put("silencioso"		, 11);
+	}
+
+	//Post: inicializa el diccionario de comandos palabra-número
+	private void inicializarComandosPar() {
+		//Orden alfabético
+		comandosPar.put("apagar"			, 0);
+		comandosPar.put("ayuda"				, 0);
+		comandosPar.put("borrarAnclados"	, 1);
+		comandosPar.put("limpiarBot"		, 2);
+		comandosPar.put("limpiarPrefijo"	, 3);
+		comandosPar.put("limpiarTodo"		, 1);
+		comandosPar.put("limpiarUsuario"	, 2);
+		comandosPar.put("numeroMensajes"	, 1);
+		comandosPar.put("opciones"			, 0);
+		comandosPar.put("ping"				, 0);
+		comandosPar.put("prefijo"			, 1);
+		comandosPar.put("silencioso"		, 1);
+	}
+
+	//Post: recibe un objeto (que no sea int) y devuelve false
+	private static Boolean toBoolean(Object i) { return false; }
+	
+	//Post: recibe un int y devuelve su equivalente Boolean
+	@SuppressWarnings("unused")
+	private static Boolean toBoolean(int i) { return i != 0 ? true : false; }
+	
 }
+
+
+
+
+/* PASOS PARA AÑADIR UN COMANDO NUEVO
+ * 
+ * MANTENER ORDEN ALFABÉTICO EN TODO EL PROCESO
+ * 
+ * MyListener.java
+ * 1.	Modificar inicializarcontenidoAyuda()
+ * 2.	Modificar inicializarComandos()
+ * 3.	Modificar inicializarComandosNum()
+ * 4.	Modificar inicializarComandosPar()
+ * 
+ * Comandos.java
+ * 5.	Modificar static IComandos[] opciones, añadiendo una nueva fila correspondiente al número dado en ComandosNum
+ * 6.	Añadir la nueva función del comando, "nombrecomando()"
+ * 
+ * */
+
+
+
+
+

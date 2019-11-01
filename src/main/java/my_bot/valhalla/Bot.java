@@ -11,17 +11,19 @@ public class Bot
     {
     	try 
     	{  		
-    	JDA api = new JDABuilder(Key.token).addEventListener(new MyListener()).build().awaitReady();
-    	//el método awaitReady hace "Blocking" garantizando que el JDA se cargará guay
-
+	    	@SuppressWarnings("unused")
+			JDA api = new JDABuilder(Key.token).addEventListener(new MyListener()).build().awaitReady();
+	    	//el método awaitReady hace "Blocking" garantizando que el JDA se cargará correctamente
     	} 
     	
-    	catch (LoginException e) {
+    	catch (LoginException e) 
+    	{
     		// Esto avisará de error en caso de que haya fallo en el proceso de autentificación
     		e.printStackTrace();
     	}
     	
-    	catch (InterruptedException e) {
+    	catch (InterruptedException e) 
+    	{
     		// Controla el método awaitReady()
     		e.printStackTrace();
     	}
