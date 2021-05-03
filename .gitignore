@@ -7,5 +7,11 @@
 #Log File
 .log
 
+#settings
+.settings
+
+#settings files
+.prefs
+
 #Clase Key
 src/main/java/myBot/Key.java
