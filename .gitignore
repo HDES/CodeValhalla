@@ -1,0 +1,11 @@
+/target/
+
+
+# Compiled class file
+*.class key
+
+#Log File
+.log
+
+#Clase Key
+src/main/java/myBot/Key.java
