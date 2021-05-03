@@ -3,7 +3,7 @@ package myBot.comandos;
 import java.util.HashSet;
 import java.util.Set;
 
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public abstract class Comando {
 

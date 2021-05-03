@@ -6,9 +6,9 @@ import java.util.Set;
 
 import myBot.comandos.Comando;
 import myBot.listeners.MyListener;
-import net.dv8tion.jda.core.entities.Message;
-import net.dv8tion.jda.core.entities.TextChannel;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class ComandoLimpiarTodo extends Comando {
 	// Constructor

@@ -5,9 +5,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.dv8tion.jda.core.events.ReadyEvent;
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.core.hooks.ListenerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+
 
 public class MyListener extends ListenerAdapter {
 
@@ -40,6 +44,8 @@ public class MyListener extends ListenerAdapter {
 	public static Map<String, Integer> comandosNum = new HashMap<String, Integer>();		//Se asigna un número arbitrario a los comandos para poder ejecutarlos usando una interfaz
 	public static Map<String, Integer> comandosPar = new HashMap<String, Integer>();		//Número máximo de parámetros que puede recibir un comando
 	/*COMANDOS*/
+	
+	public static Logger log = LoggerFactory.getLogger(MyListener.class);
 
 	//Post: llama a las funciones para incializar los diccionarios
 	@Override public void onReady(ReadyEvent event)	//Cuando el bot esté listo para funcionar lanza ReadyEvent, así que lo usamos para inicializar el map
@@ -62,17 +68,20 @@ public class MyListener extends ListenerAdapter {
 	//Post: ejecuta los comandos recibidos
 	@Override public void onMessageReceived(MessageReceivedEvent evento)
 	{	
-		if ( !controlEntrada(evento) ) return;
 		
+		log.info("Entra en el listener");
+		if ( !controlEntrada(evento) ) return;
+		log.info("Entra en el listener");
 		String[] mensajeDiv = evento.getMessage().getContentRaw().trim().split("\\s+");		//Se divide el mensaje por espacios en distintas subcadenas
 		
 		
 		try {
+			log.info("Entra en el listener");
 		Class<?> c= Class.forName(mensajeDiv[0].substring(tamPrefijo));
 		//c.newInstance();	//assuming you aren't worried about constructor.
 		// get the constructor with one parameter
         Constructor<?> constructor = c.getConstructor(new Class[] {String.class});
-
+        log.info("Entra en el listener");
         // create an instance
         Object invoker = constructor.newInstance(new Object[]{comandosNum.get(mensajeDiv[0].substring(tamPrefijo)), 0, estado.silencioso, comandos.get(mensajeDiv[0].substring(tamPrefijo)), comandosPar.get(mensajeDiv[0].substring(tamPrefijo))});
 		} catch (ClassNotFoundException e) { 
@@ -97,7 +106,7 @@ public class MyListener extends ListenerAdapter {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		log.info("Entra en el listener");
 	}
 
 	//Post: Devuelve true si el comando no es de un bot, empieza por el prefijo actual y existe, false en caso contrario
